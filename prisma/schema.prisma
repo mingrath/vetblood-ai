@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Patient {
+  id         String      @id @default(cuid())
+  hn         String?     @unique
+  name       String
+  species    String      @default("DOG") // DOG, CAT, OTHER
+  breed      String?
+  sex        String?     // MALE, FEMALE, MALE_NEUTERED, FEMALE_SPAYED
+  birthDate  DateTime?
+  ownerName  String?
+  ownerPhone String?
+  notes      String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  bloodTests BloodTest[]
+}
+
+model BloodTest {
+  id             String       @id @default(cuid())
+  patientId      String
+  patient        Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  testDate       DateTime
+  labName        String?
+  labNo          String?
+  sourceFilePath String?
+  ocrMethod      String?      // TESSERACT, GEMINI, MANUAL
+  ocrRawText     String?
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  testResults    TestResult[]
+}
+
+model TestResult {
+  id                 String    @id @default(cuid())
+  bloodTestId        String
+  bloodTest          BloodTest @relation(fields: [bloodTestId], references: [id], onDelete: Cascade)
+  parameterId        String
+  parameter          Parameter @relation(fields: [parameterId], references: [id])
+  value              Float?
+  valueText          String?
+  unit               String?
+  flag               String?   // LOW, NORMAL, HIGH
+  ocrOriginalValue   String?
+  manuallyCorrected  Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+
+  @@unique([bloodTestId, parameterId])
+}
+
+model Parameter {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  name          String
+  nameTh        String?
+  category      String       // HEMATOLOGY, CHEMISTRY, PARASITOLOGY
+  unit          String?
+  dogRefMin     Float?
+  dogRefMax     Float?
+  catRefMin     Float?
+  catRefMax     Float?
+  isQualitative Boolean      @default(false)
+  sortOrder     Int          @default(0)
+  createdAt     DateTime     @default(now())
+  testResults   TestResult[]
+}
+
+model LabTemplate {
+  id           String  @id @default(cuid())
+  name         String  @unique
+  parsingRules String  // JSON string with regex patterns
+}
+
+model AppSettings {
+  id                 String  @id @default("default")
+  geminiApiKey       String?
+  defaultLabTemplate String?
+  locale             String  @default("en")
+}
