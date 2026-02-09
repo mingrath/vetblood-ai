@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getSettings, updateSettings } from "@/app/actions";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { Settings } from "lucide-react";
